@@ -1,5 +1,5 @@
-module LispVal (LispVal(Atom, List, DottedList, Number, String, Bool, Error, Native)) where
-
+module LispVal (LispVal(Atom, List, DottedList, Number, String, Bool, Error, Native, Comment,State)) where
+import Data.Map as Map
 
 -----------------------------------------------------------
 --                    BASIC DATATYPES                    --
@@ -12,6 +12,7 @@ different datatypes to represent structures that appear in the code
 (statements, expressions, declarations, etc.) and the data that their
 evaluation produces.
 -}
+type StateT = Map String LispVal
 data LispVal = Atom String
   | List [ LispVal ]
   | DottedList [ LispVal ] LispVal
@@ -20,3 +21,5 @@ data LispVal = Atom String
   | Bool Bool
   | Error String
   | Native ([LispVal] -> LispVal)
+  | Comment
+  | State StateT
