@@ -54,17 +54,6 @@ eval env (List (Atom "if":exp: thn: els:[])) = (eval env exp) >>=
 eval env (List ((Atom "set!"): (Atom v): expr: [])) = (stateLookup env v )>>= (\x -> case x of {(Error err) -> return (Error err); otherwise -> (defineVar env v expr) })
 eval env (List [Atom "quote", val]) = return val
 eval env (List (Atom "begin":[v])) = eval env v
-eval env (List (Atom "begin": l: ls)) = ST $
-  (\s ->
-    let (ST f) = eval env l
-        (result, newState) = f s
-    in case result of
-        error@(Error _) -> (error, newState)
-        otherwise ->
-            let (ST f2) = eval (union newState env) (List (Atom "begin" : ls))
-                (result2, newState2) = f2 newState
-            in (result2, union newState2 newState)
-  )
 
 eval env (List (Atom "begin": l: ls)) = (eval env l) >>= (\v -> case v of { (error@(Error _)) -> return error; otherwise -> eval env (List (Atom "begin": ls))})
 eval env (List (Atom "begin":[])) = return (List [])
@@ -175,6 +164,7 @@ environment =
           $ insert "lt?"            (Native isLt) 
           $ insert "eqv?"           (Native compareVal)
           $ insert "cons"           (Native cons)
+          $ insert "append"         (Native append)
             empty
 
 type StateT = Map String LispVal
@@ -310,6 +300,10 @@ isLt l = if onlyNumbers l
 lispToInteger :: [LispVal] -> [Integer]
 lispToInteger [] = []
 lispToInteger ((Number n):xs) = (n:(lispToInteger xs))
+
+append :: [LispVal] -> LispVal
+append ((List x):(List y):[]) = List (x ++ y)
+append _ = Error "invalid operation"
 
 
 -----------------------------------------------------------
